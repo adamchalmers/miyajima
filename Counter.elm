@@ -1,4 +1,4 @@
-module Counter exposing (..)
+module Counter exposing (Model, init, Msg, tickMsg, update, view)
 
 import Html exposing (..)
 import Color exposing (Color, red, green, blue, black)
@@ -23,11 +23,10 @@ init : Float -> Time.Time -> Model
 init period startTime =
     { num = 0
     , limit = 9
-    , color = blue
-    , period = Time.inSeconds period
-    , start = Time.inSeconds startTime
+    , color = red
+    , period = Debug.log "p" <| period
+    , start = Debug.log "s" <| Time.inMilliseconds startTime
     }
-
 
 -- UPDATE
 
@@ -40,41 +39,34 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         Tick time ->
-            let
-                delta = Debug.log "delta" <| Time.inSeconds <| time - model.start
-            in
-                if delta > (Debug.log "period" <| model.period)
-                then { model
-                     | num = (model.num + 1) % model.limit
-                     , start = time
-                     }
-                else model
-
-
+            if (Time.inMilliseconds <| time - model.start) > (model.period)
+            then { model
+                  | num = (model.num + 1) % model.limit
+                  , start = time
+                  }
+            else model
 
 -- VIEW
 
 view : Model -> Html Msg
 view model =
+    div []
+        [ div [style <| countStyle model]
+            [ text (if model.num > 0 then (toString <| model.num) else "")
+            ]
+        ]
+
+rgb : Color -> String
+rgb col =
     let
-        rgb col =
-            let
-                rgba = Color.toRgb col
-                ts = toString
-            in concat ["rgb(", ts rgba.red, ",", ts rgba.green, ",", ts rgba.blue, ")"]
-        countStyle model =
-            [ ("font-size", "20px")
-            , ("font-family", "monospace")
-            , ("display", "inline-block")
-            , ("width", "50px")
-            , ("color", rgb model.color)
-            , ("text-align", "center")
-            ]
-    in
-        div []
-            [ div [ style <| countStyle model ] [ text (toString <| model.num) ]
-            ]
+        rgba = Color.toRgb col
+        ts = toString
+    in concat ["rgb(", ts rgba.red, ",", ts rgba.green, ",", ts rgba.blue, ")"]
 
-
-
-
+countStyle : Model -> List ( String, String )
+countStyle model =
+    [ ("font-family", "monospace")
+    , ("color", rgb model.color)
+    , ("text-align", "center")
+    , ("font-size", "4em")
+    ]

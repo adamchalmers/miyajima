@@ -48,18 +48,36 @@ viewTable model =
         h = ((List.length model.counters) // model.cols) + 1
         n = List.length model.counters
         row r = tr [] <| List.map (counterAt r) <| List.range 0 (w-1)
-        counterAt r i = case get model.counters (r*w + i) of
-            Nothing -> td [] []
-            Just cell -> td [] [Html.map CounterMsg <| Counter.view cell]
+        counterAt r i = td [tdStyle] <|
+            case get model.counters (r*w + i) of
+                Nothing -> []
+                Just cell -> [Html.map CounterMsg <| Counter.view cell]
     in
         div []
-            [ table [style [("background", "black")]]
+            [ table [tableStyle]
                 <| List.map row <| List.range 0 (h-1)
             ]
 
+tdStyle = style
+    [ ("width", "100px")
+    , ("height", "100px")
+    ]
+
+tableStyle = style
+    [ ("background", "black")
+    , ("border", "1px solid darkgray")
+    , ("margin", "0 auto")
+    ]
+
 view : Model -> Html Msg
 view model =
-    div []
+    div [ style
+            [ ("background", "black")
+            , ("position", "absolute")
+            , ("width", "100%")
+            , ("height", "100%")
+            ]
+        ]
         [ viewTable model
         ]
 
@@ -72,5 +90,5 @@ get list i = List.drop i list |> List.head
 
 subscriptions : Model -> Sub Msg
 subscriptions model = Sub.batch
-    [ Time.every Time.second Tick
+    [ Time.every Time.millisecond Tick
     ]
