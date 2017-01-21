@@ -13,13 +13,18 @@ import Window
 
 -- MODEL
 
-globals = {
-    tdSize = "20px"
-    , textSize = "1.5em"
-    , border = "0px solid gray"
-    , w = 40
-    , h = 24
-    }
+globals =
+    let
+        tdPx = 20
+    in
+        {
+        tdPx = tdPx
+        ,tdSize = (toString tdPx) ++ "px"
+        , textSize = "1.5em"
+        , border = "0px solid gray"
+        , w = 40
+        , h = 24
+        }
 
 type alias Model =
     { counters : Maybe (List Counter.Model)
@@ -43,7 +48,7 @@ type Msg =
     Tick Time.Time
     | CounterMsg Counter.Msg
     | Rnds (List Float)
-    | Resize Int Int
+    | Resize Window.Size
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -62,7 +67,7 @@ update msg model =
              | counters = Just <| List.map (\p -> Counter.init globals.textSize p 0) periods
             }, Cmd.none)
         -- TODO
-        Resize y x ->
+        Resize size ->
             (model, Cmd.none)
 
 
@@ -124,5 +129,5 @@ get list i = List.drop i list |> List.head
 subscriptions : Model -> Sub Msg
 subscriptions model = Sub.batch
     [ Time.every Time.millisecond Tick
-    , Window.resizes (\{height, width} -> Resize height width)
+    , Window.resizes Resize
     ]
