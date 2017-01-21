@@ -16,16 +16,18 @@ type alias Model =
     , color : Color
     , period : Time.Time
     , start : Time.Time
+    , fontSize : String
     }
 
 
-init : Float -> Time.Time -> Model
-init period startTime =
-    { num = 0
+init : String -> Float -> Time.Time -> Model
+init fontSize period startTime =
+    { num = -1
     , limit = 9
-    , color = red
-    , period = Debug.log "p" <| period
-    , start = Debug.log "s" <| Time.inMilliseconds startTime
+    , color = Color.blue
+    , period = period
+    , fontSize = fontSize
+    , start = Time.inMilliseconds startTime
     }
 
 -- UPDATE
@@ -68,5 +70,5 @@ countStyle model =
     [ ("font-family", "monospace")
     , ("color", rgb model.color)
     , ("text-align", "center")
-    , ("font-size", "4em")
+    , ("font-size", model.fontSize)
     ]
