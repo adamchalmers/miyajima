@@ -10,6 +10,7 @@ import Debug
 import Random
 import Window
 import Task
+import Array exposing (Array, get)
 
 -- MODEL
 
@@ -21,13 +22,14 @@ globals = {
 
 type alias Model =
     -- counters is instantiated at runtime, once random period lengths are generated.
-    { counters : Maybe (List Counter.Model)
+    { counters : Maybe (Array Counter.Model)
     -- cols and rows are instantiated at runtime, once window size is determined.
     , cols : Maybe Int
     , rows : Maybe Int
     }
 
 init : (Model, Cmd Msg)
+-- First cols/rows are calculated (with a Window.Size task), then counters are (with a Random task).
 init =
     ({ counters = Nothing
      , cols = Nothing
@@ -49,20 +51,26 @@ type Msg =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
+
         Tick time ->
             case model.counters of
                 Just cs ->
                     ({ model
-                    | counters = Just <| List.map (Counter.update <| Counter.tickMsg time) cs
+                    | counters = Just <| Array.map (Counter.update <| Counter.tickMsg time []) cs
                     }, Cmd.none)
                 Nothing -> (model, Cmd.none)
+
         CounterMsg counterMsg ->
             (model, Cmd.none)
+
         Rnds periods ->
             ({ model
-             | counters = Just <| List.map (\p -> Counter.init globals.textSize p 0) periods
+            | counters = Just <| Array.fromList <|
+                List.map2 (\p id -> Counter.init globals.textSize p 0 id)
+                periods
+                (List.range 0 (-1 + List.length periods))
             }, Cmd.none)
-        -- TODO
+
         Resize size ->
             let
                 cols = size.width // globals.tdPx
@@ -75,9 +83,6 @@ update msg model =
                 (m, Random.generate Rnds (periodGen <| cols*rows))
 
 
-
-
-
 -- VIEW
 
 viewTable : Model -> Html Msg
@@ -88,11 +93,11 @@ viewTable model =
     (_, _, Nothing) -> div [] []
     (Just cs, Just cols, Just rows) ->
         let
-            h = ((List.length cs) // cols) + 1
-            n = List.length cs
+            h = ((Array.length cs) // cols) + 1
+            n = Array.length cs
             row r = tr [] <| List.map (counterAt r) <| List.range 0 (cols-1)
             counterAt r i = td [tdStyle] <|
-                case get cs (r*cols + i) of
+                case Array.get (r*cols + i) cs of
                     Nothing -> []
                     Just cell -> [Html.map CounterMsg <| Counter.view cell]
         in
@@ -123,11 +128,6 @@ view model =
         ]
         [ viewTable model
         ]
-
-get : List a -> Int -> Maybe a
--- get: Returns the element at index i.
-get list i = List.drop i list |> List.head
-
 
 -- APP
 

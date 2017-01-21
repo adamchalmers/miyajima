@@ -10,37 +10,49 @@ import String exposing (concat)
 
 -- MODEL
 
+-- At the moment, all counters just have an int which gets incremented.
+-- In the future, we might want to use more complicated states (pairs? floats?)
+type alias State = Int
+type alias ID = Int
+
 type alias Model =
-    { num : Int
-    , limit : Int
+    { num : State
+    , limit : State
     , color : Color
     , period : Time.Time
     , start : Time.Time
     , fontSize : String
+    , id : ID
     }
 
 
-init : String -> Float -> Time.Time -> Model
-init fontSize period startTime =
+init : String -> Float -> Time.Time -> ID -> Model
+init fontSize period startTime id =
     { num = -1
     , limit = 10
     , color = Color.rgb 50 100 255
     , period = period
     , fontSize = fontSize
     , start = Time.inMilliseconds startTime
+    , id = id
     }
 
 -- UPDATE
 
-type Msg = Tick Time.Time
 
-tickMsg : Time.Time -> Msg
-tickMsg t = Tick t
+type Msg =
+    -- Tick requires both a time and a list of neighbouring states.
+    -- These neighbour states aren't used for Mega Death but are used for GOL.
+    Tick Time.Time (List State)
+
+-- This lets parent components (e.g. CounterGrid) send Msgs to Counter.
+tickMsg : Time.Time -> List State -> Msg
+tickMsg t neighbours = Tick t neighbours
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        Tick time ->
+        Tick time neighbours ->
             if (Time.inMilliseconds <| time - model.start) > (model.period)
             then { model
                   | num = (model.num + 1) % model.limit
