@@ -1,4 +1,4 @@
-module Counter exposing (Model, init, Msg, tickMsg, update, view)
+module Counter exposing (Model, init, Msg, tickMsg, update, view, State, ID)
 
 import Html exposing (..)
 import Color exposing (Color, red, green, blue, black)

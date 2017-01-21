@@ -56,7 +56,7 @@ update msg model =
             case model.counters of
                 Just cs ->
                     ({ model
-                    | counters = Just <| Array.map (Counter.update <| Counter.tickMsg time []) cs
+                    | counters = Just <| Array.indexedMap (\i c -> Counter.update (Counter.tickMsg time (neighbours i model)) c) cs
                     }, Cmd.none)
                 Nothing -> (model, Cmd.none)
 
@@ -82,7 +82,22 @@ update msg model =
             in
                 (m, Random.generate Rnds (periodGen <| cols*rows))
 
-
+neighbours : Int -> Model -> List Counter.State
+neighbours target model =
+    case (model.counters, model.cols, model.rows) of
+    (Nothing, _, _) -> Debug.crash "tried to find neighbours of uninitialized grid."
+    (_, Nothing, _) -> Debug.crash "tried to find neighbours of uninitialized grid."
+    (_, _, Nothing) -> Debug.crash "tried to find neighbours of uninitialized grid."
+    (Just cs, Just cols, Just rows) ->
+        let
+            n = Array.length cs
+            y = target // cols
+            x = target % cols
+            undo x y = (y * cols) + x
+            adjacentIDs = Debug.log (toString target) <| Array.fromList [ undo x (y+1), undo x (y-1), undo (x+1) y, undo (x-1) y ]
+            adjacents = List.filterMap identity <| Array.toList <| Array.map (\i -> Array.get i cs) adjacentIDs
+        in
+            List.map .num adjacents
 -- VIEW
 
 viewTable : Model -> Html Msg
