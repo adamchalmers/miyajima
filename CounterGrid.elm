@@ -9,30 +9,31 @@ import List
 import Debug
 import Random
 import Window
-
+import Task
 
 -- MODEL
 
 globals = {
-    tdSize = "20px"
+    tdPx = 15
     , textSize = "1.5em"
     , border = "0px solid gray"
-    , w = 40
-    , h = 24
     }
 
 type alias Model =
+    -- counters is instantiated at runtime, once random period lengths are generated.
     { counters : Maybe (List Counter.Model)
-    , cols : Int
-    , rows : Int
+    -- cols and rows are instantiated at runtime, once window size is determined.
+    , cols : Maybe Int
+    , rows : Maybe Int
     }
 
 init : (Model, Cmd Msg)
 init =
     ({ counters = Nothing
-     , cols = globals.w
-     , rows = globals.h
-     }, Random.generate Rnds (periodGen (globals.w*globals.h)))
+     , cols = Nothing
+     , rows = Nothing
+    --  }, Random.generate Rnds (periodGen n))
+     }, Task.perform Resize Window.size)
 
 periodGen : Int -> Random.Generator (List Float)
 periodGen n = Random.list n (Random.float 300 30000)
@@ -43,7 +44,7 @@ type Msg =
     Tick Time.Time
     | CounterMsg Counter.Msg
     | Rnds (List Float)
-    | Resize Int Int
+    | Resize Window.Size
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -62,8 +63,16 @@ update msg model =
              | counters = Just <| List.map (\p -> Counter.init globals.textSize p 0) periods
             }, Cmd.none)
         -- TODO
-        Resize y x ->
-            (model, Cmd.none)
+        Resize size ->
+            let
+                cols = size.width // globals.tdPx
+                rows = size.width // globals.tdPx
+                m = { model
+                    | cols = Just cols
+                    , rows = Just rows
+                    }
+            in
+                (m, Random.generate Rnds (periodGen <| cols*rows))
 
 
 
@@ -73,16 +82,17 @@ update msg model =
 
 viewTable : Model -> Html Msg
 viewTable model =
-    case model.counters of
-    Nothing -> div [] []
-    Just cs ->
+    case (model.counters, model.cols, model.rows) of
+    (Nothing, _, _) -> div [] []
+    (_, Nothing, _) -> div [] []
+    (_, _, Nothing) -> div [] []
+    (Just cs, Just cols, Just rows) ->
         let
-            w = model.cols
-            h = ((List.length cs) // model.cols) + 1
+            h = ((List.length cs) // cols) + 1
             n = List.length cs
-            row r = tr [] <| List.map (counterAt r) <| List.range 0 (w-1)
+            row r = tr [] <| List.map (counterAt r) <| List.range 0 (cols-1)
             counterAt r i = td [tdStyle] <|
-                case get cs (r*w + i) of
+                case get cs (r*cols + i) of
                     Nothing -> []
                     Just cell -> [Html.map CounterMsg <| Counter.view cell]
         in
@@ -92,8 +102,8 @@ viewTable model =
                 ]
 
 tdStyle = style
-    [ ("width", globals.tdSize)
-    , ("height", globals.tdSize)
+    [ ("width", (toString globals.tdPx) ++ "px")
+    , ("height", (toString globals.tdPx) ++ "px")
     ]
 
 tableStyle = style
@@ -124,5 +134,5 @@ get list i = List.drop i list |> List.head
 subscriptions : Model -> Sub Msg
 subscriptions model = Sub.batch
     [ Time.every Time.millisecond Tick
-    , Window.resizes (\{height, width} -> Resize height width)
+    , Window.resizes Resize
     ]

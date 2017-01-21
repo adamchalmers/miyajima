@@ -24,7 +24,7 @@ init : String -> Float -> Time.Time -> Model
 init fontSize period startTime =
     { num = -1
     , limit = 10
-    , color = Color.rgb 50 50 255
+    , color = Color.rgb 50 100 255
     , period = period
     , fontSize = fontSize
     , start = Time.inMilliseconds startTime
