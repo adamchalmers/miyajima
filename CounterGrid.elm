@@ -61,6 +61,7 @@ update msg model =
             ({ model
              | counters = Just <| List.map (\p -> Counter.init globals.textSize p 0) periods
             }, Cmd.none)
+        -- TODO
         Resize y x ->
             (model, Cmd.none)
 

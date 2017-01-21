@@ -23,8 +23,8 @@ type alias Model =
 init : String -> Float -> Time.Time -> Model
 init fontSize period startTime =
     { num = -1
-    , limit = 9
-    , color = Color.blue
+    , limit = 10
+    , color = Color.rgb 50 50 255
     , period = period
     , fontSize = fontSize
     , start = Time.inMilliseconds startTime
@@ -53,22 +53,35 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ div [style <| countStyle model]
-            [ text (if model.num > 0 then (toString <| model.num) else "")
+        [ div [style <| numberStyle model]
+            [ text <| textFor model.num
             ]
         ]
 
-rgb : Color -> String
-rgb col =
-    let
-        rgba = Color.toRgb col
-        ts = toString
-    in concat ["rgb(", ts rgba.red, ",", ts rgba.green, ",", ts rgba.blue, ")"]
+textFor : Int -> String
+textFor n =
+    if n > 0
+    then toString n
+    else "0"
 
-countStyle : Model -> List ( String, String )
-countStyle model =
+rgb : Color -> String
+rgb col = concat
+    [ "rgb("
+    , toString (Color.toRgb col).red, ","
+    , toString (Color.toRgb col).green, ","
+    , toString (Color.toRgb col).blue, ")"
+    ]
+
+numberStyle : Model -> List ( String, String )
+numberStyle model =
     [ ("font-family", "monospace")
-    , ("color", rgb model.color)
     , ("text-align", "center")
     , ("font-size", model.fontSize)
-    ]
+    , ("font-weight", "bold")
+    ] ++
+    -- Text glow, using CSS3. Tested on Chrome, not sure about other browsers.
+    if model.num > 0
+    then [ ("color", rgb model.color)
+         , ("text-shadow", "-1px 1px 20px " ++ rgb model.color ++ ", 1px -1px 20px " ++ rgb model.color)
+         ]
+    else [ ("color", "black")]
