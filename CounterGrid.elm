@@ -42,7 +42,7 @@ init =
     }, Task.perform Resize Window.size)
 
 periodGen : Int -> Random.Generator (List Float)
-periodGen n = Random.list n (Random.float 300 3000)
+periodGen n = Random.list n (Random.float 300 30000)
 
 -- UPDATE
 
@@ -104,7 +104,7 @@ viewTable model =
                 w = cols
                 h = (n // cols) + 1
                 row r = tr [] <| A.toList <| A.map (lazy cellFor) <| A.slice (r*h) (r*h + w) cs
-                cellFor counter = td [tdStyle] [Html.map CounterMsg <| Counter.view counter]
+                cellFor counter = td [tdStyle] [Html.map CounterMsg <| lazy Counter.view counter]
             in
                 div []
                     [ table [tableStyle] (List.map row <| List.range 0 (h-1))
