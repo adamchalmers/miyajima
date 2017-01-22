@@ -11,6 +11,7 @@ import Random
 import Window
 import Task
 import Array as A exposing (Array, get)
+import Html.Lazy exposing (lazy)
 
 
 -- MODEL
@@ -102,7 +103,7 @@ viewTable model =
                 n = A.length cs
                 w = cols
                 h = (n // cols) + 1
-                row r = tr [] <| A.toList <| A.map cellFor <| A.slice (r*h) (r*h + w) cs
+                row r = tr [] <| A.toList <| A.map (lazy cellFor) <| A.slice (r*h) (r*h + w) cs
                 cellFor counter = td [tdStyle] [Html.map CounterMsg <| Counter.view counter]
             in
                 div []
