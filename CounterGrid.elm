@@ -9,6 +9,8 @@ import List
 import Debug
 import Random
 import Window
+import Task
+import Array as A exposing (Array, get)
 
 
 -- MODEL
@@ -27,20 +29,20 @@ globals =
         }
 
 type alias Model =
-    { counters : Maybe (List Counter.Model)
-    , cols : Int
-    , rows : Int
+    { counters : Maybe (Array Counter.Model)
+    , cols : Maybe Int
+    , rows : Maybe Int
     }
 
 init : (Model, Cmd Msg)
 init =
     ({ counters = Nothing
-     , cols = globals.w
-     , rows = globals.h
-     }, Random.generate Rnds (periodGen (globals.w*globals.h)))
+     , cols = Nothing
+     , rows = Nothing
+    }, Task.perform Resize Window.size)
 
 periodGen : Int -> Random.Generator (List Float)
-periodGen n = Random.list n (Random.float 300 30000)
+periodGen n = Random.list n (Random.float 300 3000)
 
 -- UPDATE
 
@@ -53,48 +55,53 @@ type Msg =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
+
         Tick time ->
             case model.counters of
                 Just cs ->
                     ({ model
-                    | counters = Just <| List.map (Counter.update <| Counter.tickMsg time) cs
+                    | counters = Just <| A.map (Counter.update <| Counter.tickMsg time) cs
                     }, Cmd.none)
                 Nothing -> (model, Cmd.none)
+
         CounterMsg counterMsg ->
             (model, Cmd.none)
+
         Rnds periods ->
             ({ model
-             | counters = Just <| List.map (\p -> Counter.init globals.textSize p 0) periods
+             | counters = Just <| A.map (\p -> Counter.init globals.textSize p 0) (A.fromList periods)
             }, Cmd.none)
-        -- TODO
-        Resize size ->
-            (model, Cmd.none)
 
-
-
+        Resize windowSize ->
+            let
+                cols = windowSize.width // globals.tdPx
+                rows = windowSize.height // globals.tdPx
+                m = { model
+                    | cols = Just cols
+                    , rows = Just rows
+                    }
+            in
+                (m, Random.generate Rnds (periodGen <| cols*rows))
 
 
 -- VIEW
 
 viewTable : Model -> Html Msg
 viewTable model =
-    case model.counters of
-    Nothing -> div [] []
-    Just cs ->
-        let
-            w = model.cols
-            h = ((List.length cs) // model.cols) + 1
-            n = List.length cs
-            row r = tr [] <| List.map (counterAt r) <| List.range 0 (w-1)
-            counterAt r i = td [tdStyle] <|
-                case get cs (r*w + i) of
-                    Nothing -> []
-                    Just cell -> [Html.map CounterMsg <| Counter.view cell]
-        in
-            div []
-                [ table [tableStyle]
-                    <| List.map row <| List.range 0 (h-1)
-                ]
+    case (model.counters, model.cols, model.rows) of
+
+        (Just cs, Just cols, Just rows) ->
+            let
+                n = A.length cs
+                w = cols
+                h = (n // cols) + 1
+                row r = tr [] <| A.toList <| A.map cellFor <| A.slice (r*h) (r*h + w) cs
+                cellFor counter = td [tdStyle] [Html.map CounterMsg <| Counter.view counter]
+            in
+                div []
+                    [ table [tableStyle] (List.map row <| List.range 0 (h-1))
+                    ]
+        (_, _, _) -> div [] []
 
 tdStyle = style
     [ ("width", globals.tdSize)
@@ -118,10 +125,6 @@ view model =
         ]
         [ viewTable model
         ]
-
-get : List a -> Int -> Maybe a
--- get: Returns the element at index i.
-get list i = List.drop i list |> List.head
 
 
 -- APP

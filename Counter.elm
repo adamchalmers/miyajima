@@ -13,7 +13,7 @@ import String exposing (concat)
 type alias Model =
     { num : Int
     , limit : Int
-    , color : Color
+    , color : String
     , period : Time.Time
     , start : Time.Time
     , fontSize : String
@@ -24,7 +24,7 @@ init : String -> Float -> Time.Time -> Model
 init fontSize period startTime =
     { num = -1
     , limit = 10
-    , color = Color.rgb 50 100 255
+    , color = "rgb(50,100,255)"
     , period = period
     , fontSize = fontSize
     , start = Time.inMilliseconds startTime
@@ -81,7 +81,7 @@ numberStyle model =
     ] ++
     -- Text glow, using CSS3. Tested on Chrome, not sure about other browsers.
     if model.num > 0
-    then [ ("color", rgb model.color)
-         , ("text-shadow", "-1px 1px 20px " ++ rgb model.color ++ ", 1px -1px 20px " ++ rgb model.color)
+    then [ ("color", model.color)
+         , ("text-shadow", "-1px 1px 20px " ++ model.color ++ ", 1px -1px 20px " ++ model.color)
          ]
     else [ ("color", "black")]
