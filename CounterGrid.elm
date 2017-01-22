@@ -19,9 +19,8 @@ globals =
     let
         tdPx = 20
     in
-        {
-        tdPx = tdPx
-        ,tdSize = (toString tdPx) ++ "px"
+        { tdPx = tdPx
+        , tdSize = (toString tdPx) ++ "px"
         , textSize = "1.5em"
         , border = "0px solid gray"
         , w = 40
@@ -47,14 +46,19 @@ periodGen n = Random.list n (Random.float 300 3000)
 -- UPDATE
 
 type Msg =
+    -- Pass the tick to each counter so they can update if their period is over.
     Tick Time.Time
+    -- Not used in practice
     | CounterMsg Counter.Msg
+    -- Used only once at start of app, when the random period lengths are generated.
     | Rnds (List Float)
+    -- Used to determine how many cols/rows we need to fill the screen.
     | Resize Window.Size
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
+
 
         Tick time ->
             case model.counters of
@@ -62,16 +66,19 @@ update msg model =
                     ({ model
                     | counters = Just <| A.map (Counter.update <| Counter.tickMsg time) cs
                     }, Cmd.none)
+                -- Ignore ticks if the counters haven't been initialized yet.
                 Nothing -> (model, Cmd.none)
 
         CounterMsg counterMsg ->
             (model, Cmd.none)
 
+        -- Once we receive a list of periods, we can initialize the counters with them.
         Rnds periods ->
             ({ model
-             | counters = Just <| A.map (\p -> Counter.init globals.textSize p 0) (A.fromList periods)
+             | counters = Just <| A.map (\p -> Counter.init globals.textSize p) (A.fromList periods)
             }, Cmd.none)
 
+        -- Once we have a window size we know how many counters we'll need, so we can generate period lengths.
         Resize windowSize ->
             let
                 cols = windowSize.width // globals.tdPx
@@ -101,6 +108,7 @@ viewTable model =
                 div []
                     [ table [tableStyle] (List.map row <| List.range 0 (h-1))
                     ]
+
         (_, _, _) -> div [] []
 
 tdStyle = style
