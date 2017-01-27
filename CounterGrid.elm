@@ -22,7 +22,7 @@ globals =
     in
         { tdPx = tdPx
         , tdSize = (toString tdPx) ++ "px"
-        , textSize = "1.5em"
+        , textSize = 16
         , border = "0px solid gray"
         , w = 40
         , h = 24

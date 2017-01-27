@@ -6,6 +6,7 @@ import Time
 import Debug
 import String exposing (concat)
 
+import SevenSeg exposing (sevenSeg)
 
 -- MODEL
 
@@ -15,11 +16,11 @@ type alias Model =
     , color : String
     , period : Time.Time
     , start : Time.Time
-    , fontSize : String
+    , fontSize : Float
     }
 
 
-init : String -> Float -> Model
+init : Float -> Float -> Model
 init fontSize period =
     { num = -1
     , limit = 10
@@ -54,25 +55,5 @@ view : Model -> Html Msg
 -- Each counter is just some coloured text and a number.
 view model =
     div []
-        [ div [style <| numberStyle model] [ text <| textFor model.num ]
+        [ div [] [ sevenSeg (model.fontSize*0.7) model.fontSize model.color model.num ]
         ]
-
-textFor : Int -> String
-textFor n =
-    if n > 0
-    then toString n
-    else "0"
-
-numberStyle : Model -> List ( String, String )
-numberStyle model =
-    [ ("font-family", "monospace")
-    , ("text-align", "center")
-    , ("font-size", model.fontSize)
-    , ("font-weight", "bold")
-    ] ++
-    -- Text glow, using CSS3. Tested on Chrome, not sure about other browsers.
-    if model.num > 0
-    then [ ("color", model.color)
-         , ("text-shadow", concat ["-1px 1px 20px ", model.color, ", 1px -1px 20px ", model.color])
-         ]
-    else [ ("color", "black")]
